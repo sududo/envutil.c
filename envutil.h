@@ -96,7 +96,7 @@ env_load_error env_load(const char *restrict filePath, const bool overwrite){
   FILE *file = fopen(filePath != NULL ? filePath : "./.env", "r");
   if(file == NULL) return ENV_LOAD_ERR_NO_FILE;
 
-  char buffer[ENV_UTIL_MAX_BUFF_SIZE];
+  char buffer[ENV_UTIL_MAX_BUFF_SIZE] = {0};
   size_t bufferCount = 0;//count does not include the null term
   int result;
   bool returnNextLoop = false;
@@ -260,13 +260,15 @@ int _load_line_into_buff(char *restrict buffer, size_t *restrict pCount, FILE *r
   for(size_t i = 0;i < ENV_UTIL_MAX_BUFF_SIZE;i++) buffer[i] = '\0';
   for(;;){
     int result = _load_chunk_into_buff(buffer, pCount, file);
-    if(result != 0 && !(*pCount != 0 && result == 1)) return result;
+    if(result != 0) return result;
     for(;;(*pCount)--){
-      if(buffer[(*pCount) - 1] == '\0') continue;
-      else if(buffer[(*pCount) - 1] == '\n') return 0;
-      else if(result == 1){
-        buffer[*pCount] = '\n';
-        return -1;
+      if(buffer[(*pCount)] == '\0'){
+        if(*pCount == 0) return 0;
+        continue;
+      }
+      else if(buffer[(*pCount)] == '\n'){
+        (*pCount)++;
+        return 0;
       }
       else break;
     }
